@@ -1,3 +1,3 @@
 # Spotify-Fav-music-to-Youtube
 
-- Working on Youtube API search algorithm
+- A python web to fetch spotify fav music and update it facebook
