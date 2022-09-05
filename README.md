@@ -1,3 +1,3 @@
 # Spotify-Fav-music-to-Youtube
 
-- Working on it
+- Working on Youtube API search algorithm
