@@ -1,3 +1,7 @@
+'''
+# Self Project to understand about external api and method
+# email = bhargavrama300@gmail.com
+'''
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from flask import Flask, url_for, session, request, redirect
