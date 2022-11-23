@@ -23,7 +23,7 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 api_service_name = "youtube"
 api_version = "v3"
-client_secrets_file = "client_secret_633095474208-2j3rgsvjpfti0495aehbnsa53m2jnvsn.apps.googleusercontent.com.json"
+client_secrets_file = "clientSecretKey.json"
 
 # Get credentials and create an API client
 flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
@@ -32,27 +32,49 @@ credentials = flow.run_console()
 youtube = googleapiclient.discovery.build(
     api_service_name, api_version, credentials=credentials)
 
+videoId = []
+ids=[]
+newPlaylistId = "lol"
 
 def getVideoId(query):
-    searchQueryUrl="http://www.youtube.com/results?search_query="
-    url = searchQueryUrl + query
-    url.replace(" ","+")
-    page = requests.get(url)
-    session = HTMLSession()
-    response = session.get(url)
-    response.html.render(sleep=1)
-    soup = BeautifulSoup(response.html.html,"html.parser")
-    results = soup.find('a',id="video-title")
-    return results['href'].split('/watch?v=')[1]
+  request = youtube.search().list(
+    part="snippet"
+    ,maxResults = 1
+    , q = query
+  )
+  response = request.execute()
+  for item in response['items']:
+    videoIds.append(item['id']['videoId'])
+  return videoId[0]
 
 def listOfVideoIds(list):
-  ids=[]
   for index,item in enumerate(list):
-    videoId = getVideoId(item)
-    ids += [videoId]
+    temp = getVideoId(item)
+    ids += [temp]
     return ids
 
-def addToPlaylist(id,videoID):
+def createPlaylist():
+  request = youtube.playlists().insert(
+        part="snippet,status",
+        body={
+          "snippet": {
+            "title": "Sample playlist created via API",
+            "description": "This is a sample playlist description.",
+            "tags": [
+              "sample playlist",
+              "API call"
+            ],
+            "defaultLanguage": "en"
+          },
+          "status": {
+            "privacyStatus": "private"
+          }
+        }
+  )
+  response = request.execute()
+  newPlaylistId = response['id']
+
+def addToPlaylist(id,vID):
         request = youtube.playlistItems().insert(
         part="snippet",
         body={
@@ -61,42 +83,27 @@ def addToPlaylist(id,videoID):
             "position": 0,
             "resourceId": {
               "kind": "youtube#video",
-              "videoId": videoID
+              "videoId": vID
             }
           }
         }
         )
         response = request.execute()
-        print(response)
 
-def multiToPlaylist(id,list):
+def multiToPlaylist(vId,list):
   for index,item in enumerate(list):
-    addToPlaylist(id,item)
+    addToPlaylist(vId,item)
 
 def main():
-    request = youtube.playlists().insert(
-        part="snippet,status",
-        body={
-          "snippet": {
-            "title": "Spotify API Testing",
-            "description": "Playlist of spotify liked videos",
-            "tags": [
-              "spotify playlist"
-            ],
-            "defaultLanguage": "en"
-          },
-          "status": {
-            "privacyStatus": "private"
-          }
-        }
-    )
-    response = request.execute()
-
-    newPlaylistId = response['id']
-
     data = pandas.read_csv('songs.csv')
     data = data['Songs'].tolist()
-    multiToPlaylist(newPlaylistId,data)
+
+  #Create Playlist
+    createPlaylist()
+    
+    listOfVideoIds(data)
+    #Add videos to playlist
+    multiToPlaylist(newPlaylistId,ids)
 
 if __name__ == "__main__":
     main()
